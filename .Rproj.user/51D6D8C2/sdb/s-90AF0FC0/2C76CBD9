@@ -1,0 +1,17 @@
+{
+    "contents" : "## The Costs, Both Economic and Human, of Weather Events in the US\nHere is a synopsis. Add several sentences.\n\n### Data Processing\nI got the data from here. Quick description. \n\n```{r, cache=TRUE}\nstormdata <- read.csv(bzfile(\"repdata-data-StormData.csv.bz2\"))\n```\n\nLet's look at the variable names.\n```{r}\nnames(stormdata)\n```\n\nFor this analysis, we care most about events and their human and economic costs across the United States. Let's take a look at those variables. \n\nFirst, the events.\n```{r}\nunique(stormdata$EVTYPE)[1:5]\n```\n\nNearly 1000 different event types and those types are as expected. Should we aggregate similar types?\n\nNext, the human costs. There are two variables that matter to us. \n```{r}\nstr(stormdata$FATALITIES)\nsummary(stormdata$FATALITIES)\nstr(stormdata$INJURIES)\nsummary(stormdata$INJURIES)\n```\n\nNo surprises there. \n\nWe will create a new variable called `CASUALTIES` which we define as the sum of `INJURIES` and 10 * `FATALITIES`. In estimating human cost, a single fatality should count much more than an injury.\n```{r}\nsuppressMessages(library(dplyr))\n#Start creating a subset of stormdata for specific analysis\nstormdatatidy <- mutate(stormdata, CASUALTIES = FATALITIES * 10 + INJURIES)\nsummary(stormdatatidy$CASUALTIES)\n```\n\nLet's turn our attention to economic costs. Both property and crop damage count are economic costs.\n\nFirst, property damage. Curiously, there are two variables which may matter.\n```{r}\nstr(stormdata$PROPDMG)\nsummary(stormdata$PROPDMG)\nstr(stormdata$PROPDMGEXP)\nsummary(stormdata$PROPDMGEXP)\n```\n\n`PROPDMG` is a numeric vector as expected although the numbers seem low. Surprisingly, `PROPDMGEXP` is a 19 level factor variable. Let's take a closer look.\n```{r}\nsummarize(group_by(stormdata, PROPDMGEXP), count = n())\n```\n\nAlmost all observations are either `K`, `M` or `EMPTY`. It's reasonable to assume that `K` stands for thousands, `M` for millions and `EMPTY` for small (< $1000) amounts of damage or none at all. Let's take a closer look. \n```{r}\nsummarize(group_by(stormdata, PROPDMGEXP), count = n(), dollars = sum(PROPDMG))\n```\n\n### Results",
+    "created" : 1429671672560.000,
+    "dirty" : false,
+    "encoding" : "UTF-8",
+    "folds" : "",
+    "hash" : "1755307231",
+    "id" : "2C76CBD9",
+    "lastKnownWriteTime" : 1429906690,
+    "path" : "~/RepData_PeerAssessment2/RepData_PA2.Rmd",
+    "project_path" : "RepData_PA2.Rmd",
+    "properties" : {
+        "tempName" : "Untitled1"
+    },
+    "source_on_save" : false,
+    "type" : "r_markdown"
+}

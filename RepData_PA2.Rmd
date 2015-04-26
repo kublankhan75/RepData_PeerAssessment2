@@ -1,0 +1,63 @@
+## The Costs, Both Economic and Human, of Weather Events in the US
+Here is a synopsis. Add several sentences.
+
+### Data Processing
+I got the data from here. Quick description. 
+
+```{r, cache=TRUE}
+stormdata <- read.csv(bzfile("repdata-data-StormData.csv.bz2"))
+```
+
+Let's look at the variable names.
+```{r}
+names(stormdata)
+```
+
+For this analysis, we care most about events and their human and economic costs across the United States. Let's take a look at those variables. 
+
+First, the events.
+```{r}
+unique(stormdata$EVTYPE)[1:5]
+```
+
+Nearly 1000 different event types and those types are as expected. Should we aggregate similar types?
+
+Next, the human costs. There are two variables that matter to us. 
+```{r}
+str(stormdata$FATALITIES)
+summary(stormdata$FATALITIES)
+str(stormdata$INJURIES)
+summary(stormdata$INJURIES)
+```
+
+No surprises there. 
+
+We will create a new variable called `CASUALTIES` which we define as the sum of `INJURIES` and 10 * `FATALITIES`. In estimating human cost, a single fatality should count much more than an injury.
+```{r}
+suppressMessages(library(dplyr))
+#Start creating a subset of stormdata for specific analysis
+stormdatatidy <- mutate(stormdata, CASUALTIES = FATALITIES * 10 + INJURIES)
+summary(stormdatatidy$CASUALTIES)
+```
+
+Let's turn our attention to economic costs. Both property and crop damage count are economic costs.
+
+First, property damage. Curiously, there are two variables which may matter.
+```{r}
+str(stormdata$PROPDMG)
+summary(stormdata$PROPDMG)
+str(stormdata$PROPDMGEXP)
+summary(stormdata$PROPDMGEXP)
+```
+
+`PROPDMG` is a numeric vector as expected although the numbers seem low. Surprisingly, `PROPDMGEXP` is a 19 level factor variable. Let's take a closer look.
+```{r}
+summarize(group_by(stormdata, PROPDMGEXP), count = n())
+```
+
+Almost all observations are either `K`, `M` or `EMPTY`. It's reasonable to assume that `K` stands for thousands, `M` for millions and `EMPTY` for small (< $1000) amounts of damage or none at all. Let's take a closer look. 
+```{r}
+summarize(group_by(stormdata, PROPDMGEXP), count = n(), dollars = sum(PROPDMG))
+```
+
+### Results

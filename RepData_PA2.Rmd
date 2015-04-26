@@ -113,4 +113,41 @@ We will create with a simple summary table as the backbone of our analysis.
 sumtbl <- summarize(group_by(stormdatatidy, EVTYPE), casualties = sum(casualties), damage = sum(econdamage))
 ```
 
+Not surprisingly, there's a strong correlation between damage and casualties.
+```{r}
+suppressWarnings(library(ggplot2))
+ggplot(sumtbl, aes(log10(damage), log10(casualties))) + geom_point()
+#With more time, draw the linear regression
+```
+
 Let's see which events create the most casualties.
+```{r}
+arrange(sumtbl, desc(casualties))
+```
+
+And the most economic damage.
+```{r}
+arrange(sumtbl, desc(damage))
+```
+
+Let's see which `EVTYPE` are in the top 20 for both casualties and damage.
+```{r}
+c20 <- arrange(sumtbl, desc(casualties))[1:20,1]
+d20 <- arrange(sumtbl, desc(damage))[1:20,1]
+i <- intersect(c20, d20)
+i
+```
+
+Here's the best summary for a time-strapped government body.
+```{r}
+suppressWarnings(library(knitr))
+kable(
+        sumtbl %>%
+        #Pick the events that are top 20 in both casualties and damage
+        filter(EVTYPE %in% i$EVTYPE) %>%
+        #Sort by casualties
+        arrange(desc(casualties))
+        )
+```
+
+Looks like governments should have responses (snow plows) as well as preventative measures (e.g. building codes, warning systems) to minimize casualties and economic damange from extreme weather.

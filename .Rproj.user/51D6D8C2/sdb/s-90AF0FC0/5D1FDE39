@@ -1,0 +1,22 @@
+{
+    "contents" : "",
+    "created" : 1430076616915.000,
+    "dirty" : false,
+    "encoding" : "",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "5D1FDE39",
+    "lastKnownWriteTime" : 7741240722073845761,
+    "path" : null,
+    "project_path" : null,
+    "properties" : {
+        "caption" : "sumtbl",
+        "contentUrl" : "content?title=sumtbl&file=ea86ea920cfd4d7c957417345d21e117.htm",
+        "displayedObservations" : 979,
+        "displayedVariables" : 3,
+        "totalObservations" : 979,
+        "variables" : 3
+    },
+    "source_on_save" : false,
+    "type" : "r_dataframe"
+}

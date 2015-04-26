@@ -1,0 +1,22 @@
+{
+    "contents" : "",
+    "created" : 1430069161975.000,
+    "dirty" : false,
+    "encoding" : "",
+    "folds" : "",
+    "hash" : "0",
+    "id" : "BE530242",
+    "lastKnownWriteTime" : 7741240722073845761,
+    "path" : null,
+    "project_path" : null,
+    "properties" : {
+        "caption" : "unique(stormdata$EVTYPE)",
+        "contentUrl" : "content?title=unique(stormdata%24EVTYPE)&file=29559d48055540999b9a48839265c190.htm",
+        "displayedObservations" : 985,
+        "displayedVariables" : 1,
+        "totalObservations" : 985,
+        "variables" : 1
+    },
+    "source_on_save" : false,
+    "type" : "r_dataframe"
+}

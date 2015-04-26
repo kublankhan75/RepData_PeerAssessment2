@@ -1,8 +1,8 @@
 ## The Costs, Both Economic and Human, of Weather Events in the US
-Here is a synopsis. Add several sentences.
+Evaluated storm data from the National Weather Service of NOAA, focusing on the human casualties and the economic damage related to weather events.
 
 ### Data Processing
-I got the data from here. Quick description. 
+I got the data from [here](https://d396qusza40orc.cloudfront.net/repdata%2Fdata%2FStormData.csv.bz2).
 
 ```{r, cache=TRUE}
 stormdata <- read.csv(bzfile("repdata-data-StormData.csv.bz2"))
@@ -20,7 +20,7 @@ First, the events.
 unique(stormdata$EVTYPE)[1:5]
 ```
 
-Nearly 1000 different event types and those types are as expected. Should we aggregate similar types?
+Nearly 1000 different event types and those types are as expected. With more time, perhaps figure out how to aggregate similar events.
 
 Next, the human costs. There are two variables that matter to us. 
 ```{r}
@@ -116,8 +116,8 @@ sumtbl <- summarize(group_by(stormdatatidy, EVTYPE), casualties = sum(casualties
 Not surprisingly, there's a strong correlation between damage and casualties.
 ```{r}
 suppressWarnings(library(ggplot2))
-ggplot(sumtbl, aes(log10(damage), log10(casualties))) + geom_point()
 #With more time, draw the linear regression
+ggplot(sumtbl, aes(log10(damage), log10(casualties))) + geom_point()
 ```
 
 Let's see which events create the most casualties.

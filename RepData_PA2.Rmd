@@ -57,7 +57,60 @@ summarize(group_by(stormdata, PROPDMGEXP), count = n())
 
 Almost all observations are either `K`, `M` or `EMPTY`. It's reasonable to assume that `K` stands for thousands, `M` for millions and `EMPTY` for small (< $1000) amounts of damage or none at all. Let's take a closer look. 
 ```{r}
-summarize(group_by(stormdata, PROPDMGEXP), count = n(), dollars = sum(PROPDMG))
+summarize(group_by(stormdata, PROPDMGEXP), count = format(n(), big.mark = ","), dollars = format(sum(PROPDMG), big.mark = ",", digits = "0", scientific = FALSE))
 ```
 
+Given how large the `K`, `M` and `EMPTY` are in terms of dollars, we can safely ignore the remaining 16 factors as transcription errors. 
+
+In our `stormdatatidy` set, let's create a new variable based on `PROPDMG` so that we have the damage in consistent dollars. Then, we'll keep only the observations we the three factors we care about.
+```{r}
+#Chaining would be nice to use here if I had the time.
+stormdatatidy <- mutate(stormdatatidy, MULT = ifelse(PROPDMGEXP == "", 1, ifelse(PROPDMGEXP == "K", 1000, ifelse(PROPDMGEXP == "M", 1000000, 0))))
+stormdatatidy <- mutate(stormdatatidy, propdamage = MULT * PROPDMG)
+stormdatatidy <- filter(stormdatatidy, PROPDMGEXP == "" | PROPDMGEXP == "K" | PROPDMGEXP == "M")
+dim(stormdata)
+dim(stormdatatidy)
+```
+
+Now, we turn our attention to crop damage. Like property damage, there are two variables involved: `CROPDMG` and `CROPDMGEXP`. Let's use the same approach. 
+```{r}
+summarize(group_by(stormdata, CROPDMGEXP), count = format(n(), big.mark = ","), dollars = format(sum(CROPDMG), big.mark = ",", digits = "0", scientific = FALSE))
+```
+
+We see `K`, `M` and `EMPTY` dominate in the case, too. Therefore we will use the same approach as with property damage: create a new varible with consistent dollars and discard the presumed transcription errors. 
+```{r}
+stormdatatidy <- stormdatatidy %>%
+        mutate(MULT = ifelse(CROPDMGEXP == "", 1, 
+            ifelse(CROPDMGEXP == "K", 1000, 
+            ifelse(CROPDMGEXP == "M", 1000000, 0)))) %>%
+        mutate(cropdamage = MULT * PROPDMG) %>%
+        filter(CROPDMGEXP == "" | CROPDMGEXP == "K" | CROPDMGEXP == "M")
+dim(stormdata)
+dim(stormdatatidy)
+```
+
+Now we'll sum `cropdamage` and `propdamage` to create overall `econdamage`.
+```{r}
+stormdatatidy <- stormdatatidy %>%
+        mutate(econdamage = cropdamage + propdamage)
+summary(stormdatatidy$econdamage)
+```
+
+Now, a final cleanup to capture just the variables we want.
+```{r}
+stormdatatidy <- select(stormdatatidy, EVTYPE, casualties = CASUALTIES, econdamage)
+dim(stormdata)
+dim(stormdatatidy)
+```
+
+Looks like we're ready to do some analysis. (Finally.)
+```{r}
+summary(stormdatatidy)
+```
 ### Results
+We will create with a simple summary table as the backbone of our analysis.
+```{r}
+sumtbl <- summarize(group_by(stormdatatidy, EVTYPE), casualties = sum(casualties), damage = sum(econdamage))
+```
+
+Let's see which events create the most casualties.

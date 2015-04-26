@@ -132,10 +132,92 @@ summary(stormdatatidy$CASUALTIES)</code></pre>
 ## 17          K 424665
 ## 18          m      7
 ## 19          M  11330</code></pre>
-<p>Almost all observations are either <code>K</code>, <code>M</code> or <code>EMPTY</code>. It’s reasonable to assume that <code>K</code> stands for thousands, <code>M</code> for millions and <code>EMPTY</code> for small (&lt; $1000) amounts of damage or none at all.</p>
+<p>Almost all observations are either <code>K</code>, <code>M</code> or <code>EMPTY</code>. It’s reasonable to assume that <code>K</code> stands for thousands, <code>M</code> for millions and <code>EMPTY</code> for small (&lt; $1000) amounts of damage or none at all. Let’s take a closer look.</p>
+<pre class="r"><code>summarize(group_by(stormdata, PROPDMGEXP), count = format(n(), big.mark = &quot;,&quot;), dollars = format(sum(PROPDMG), big.mark = &quot;,&quot;, digits = &quot;0&quot;, scientific = FALSE))</code></pre>
+<pre><code>## Source: local data frame [19 x 3]
+## 
+##    PROPDMGEXP   count    dollars
+## 1             465,934        527
+## 2           -       1         15
+## 3           ?       8          0
+## 4           +       5        117
+## 5           0     216      7,108
+## 6           1      25          0
+## 7           2      13         12
+## 8           3       4         20
+## 9           4       4         14
+## 10          5      28        210
+## 11          6       4         65
+## 12          7       5         82
+## 13          8       1          0
+## 14          B      40        276
+## 15          h       1          2
+## 16          H       6         25
+## 17          K 424,665 10,735,292
+## 18          m       7         39
+## 19          M  11,330    140,694</code></pre>
+<p>Given how large the <code>K</code>, <code>M</code> and <code>EMPTY</code> are in terms of dollars, we can safely ignore the remaining 16 factors as transcription errors.</p>
+<p>In our <code>stormdatatidy</code> set, let’s create a new variable based on <code>PROPDMG</code> so that we have the damage in consistent dollars. Then, we’ll keep only the observations we the three factors we care about.</p>
+<pre class="r"><code>#Chaining would be nice to use here if I had the time.
+stormdatatidy &lt;- mutate(stormdatatidy, MULT = ifelse(PROPDMGEXP == &quot;&quot;, 1, ifelse(PROPDMGEXP == &quot;K&quot;, 1000, ifelse(PROPDMGEXP == &quot;M&quot;, 1000000, 0))))
+stormdatatidy &lt;- mutate(stormdatatidy, propdamage = MULT * PROPDMG)
+stormdatatidy &lt;- filter(stormdatatidy, PROPDMGEXP == &quot;&quot; | PROPDMGEXP == &quot;K&quot; | PROPDMGEXP == &quot;M&quot;)
+dim(stormdata)</code></pre>
+<pre><code>## [1] 902297     37</code></pre>
+<pre class="r"><code>dim(stormdatatidy)</code></pre>
+<pre><code>## [1] 901929     40</code></pre>
+<p>Now, we turn our attention to crop damage. Like property damage, there are two variables involved: <code>CROPDMG</code> and <code>CROPDMGEXP</code>. Let’s use the same approach.</p>
+<pre class="r"><code>summarize(group_by(stormdata, CROPDMGEXP), count = format(n(), big.mark = &quot;,&quot;), dollars = format(sum(CROPDMG), big.mark = &quot;,&quot;, digits = &quot;0&quot;, scientific = FALSE))</code></pre>
+<pre><code>## Source: local data frame [9 x 3]
+## 
+##   CROPDMGEXP   count   dollars
+## 1            618,413        11
+## 2          ?       7         0
+## 3          0      19       260
+## 4          2       1         0
+## 5          B       9        14
+## 6          k      21       436
+## 7          K 281,832 1,342,956
+## 8          m       1        10
+## 9          M   1,994    34,141</code></pre>
+<p>We see <code>K</code>, <code>M</code> and <code>EMPTY</code> dominate in the case, too. Therefore we will use the same approach as with property damage: create a new varible with consistent dollars and discard the presumed transcription errors.</p>
+<pre class="r"><code>stormdatatidy &lt;- stormdatatidy %&gt;%
+        mutate(MULT = ifelse(CROPDMGEXP == &quot;&quot;, 1, 
+            ifelse(CROPDMGEXP == &quot;K&quot;, 1000, 
+            ifelse(CROPDMGEXP == &quot;M&quot;, 1000000, 0)))) %&gt;%
+        mutate(cropdamage = MULT * PROPDMG) %&gt;%
+        filter(CROPDMGEXP == &quot;&quot; | CROPDMGEXP == &quot;K&quot; | CROPDMGEXP == &quot;M&quot;)
+dim(stormdata)</code></pre>
+<pre><code>## [1] 902297     37</code></pre>
+<pre class="r"><code>dim(stormdatatidy)</code></pre>
+<pre><code>## [1] 901874     41</code></pre>
+<p>Now we’ll sum <code>cropdamage</code> and <code>propdamage</code> to create overall <code>econdamage</code>.</p>
+<pre class="r"><code>stormdatatidy &lt;- stormdatatidy %&gt;%
+        mutate(econdamage = cropdamage + propdamage)
+summary(stormdatatidy$econdamage)</code></pre>
+<pre><code>##      Min.   1st Qu.    Median      Mean   3rd Qu.      Max. 
+## 0.000e+00 0.000e+00 0.000e+00 3.349e+05 1.000e+03 1.858e+09</code></pre>
+<p>Now, a final cleanup to capture just the variables we want.</p>
+<pre class="r"><code>stormdatatidy &lt;- select(stormdatatidy, EVTYPE, casualties = CASUALTIES, econdamage)
+dim(stormdata)</code></pre>
+<pre><code>## [1] 902297     37</code></pre>
+<pre class="r"><code>dim(stormdatatidy)</code></pre>
+<pre><code>## [1] 901874      3</code></pre>
+<p>Looks like we’re ready to do some analysis. (Finally.)</p>
+<pre class="r"><code>summary(stormdatatidy)</code></pre>
+<pre><code>##                EVTYPE         casualties         econdamage       
+##  HAIL             :288608   Min.   :   0.000   Min.   :0.000e+00  
+##  TSTM WIND        :219939   1st Qu.:   0.000   1st Qu.:0.000e+00  
+##  THUNDERSTORM WIND: 82559   Median :   0.000   Median :0.000e+00  
+##  TORNADO          : 60622   Mean   :   0.317   Mean   :3.349e+05  
+##  FLASH FLOOD      : 54260   3rd Qu.:   0.000   3rd Qu.:1.000e+03  
+##  FLOOD            : 25320   Max.   :5830.000   Max.   :1.858e+09  
+##  (Other)          :170566</code></pre>
 </div>
 <div id="results" class="section level3">
 <h3>Results</h3>
+<p>We will create with a simple summary table as the backbone of our analysis.</p>
+<pre class="r"><code>sumtbl &lt;- summarize(group_by(stormdatatidy, EVTYPE), casualties = sum(casualties), damage = sum(econdamage))</code></pre>
 </div>
 </div>
 
